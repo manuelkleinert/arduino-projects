@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <dht.h>
+#include <Servo.h>
 // #include <Stepper.h>
 // #include <LiquidCrystal.h>
 
@@ -18,9 +20,21 @@
 const int ledPin = 13;
 int incomingByte;
 
+
+int temp, chk, light, volum;
+float R1 = 10000;
+float logR2, R2, T, Tc, Tf;
+Servo servo;
+
+dht DHT;
+
 void setup() {
   Serial.begin(9600);
   pinMode(ledPin, OUTPUT);
+  pinMode (2, INPUT) ;
+
+  servo.attach(5);
+  servo.write(0);
 
   // pinMode(Led_Rot, OUTPUT);
   // pinMode(Led_Blau, OUTPUT);
@@ -51,6 +65,51 @@ void loop() {
         digitalWrite(ledPin, LOW);
       }
     }
+
+
+    light = analogRead(5);
+    temp = analogRead(0);
+    volum = analogRead(2);
+    // volum = digitalRead(2);
+
+    R2 = R1 * (1023.0 / (float)temp - 1.0);
+    logR2 = log(R2);
+    T = 1 / (0.001129148 + (0.000234125 * logR2) + (0.0000000876741 * logR2 * logR2 * logR2));
+    Tc = T - 273.15;
+    Tf = (Tc * 9.0)/ 5.0 + 32.0;
+
+    Serial.print("Temperature: ");
+    Serial.print(Tf);
+    Serial.print(" F; ");
+    Serial.print(Tc);
+    Serial.print(" C");
+
+
+    chk = DHT.read11(7);
+
+    Serial.print(" ---- ");
+
+    Serial.print("Temperature = ");
+    Serial.print(DHT.temperature - 4);
+    Serial.print(" Humidity = ");
+    Serial.print(DHT.humidity);
+
+    Serial.print(" light = ");
+    Serial.print(light);
+
+    Serial.print(" volum = ");
+    Serial.println(volum);
+
+
+    if (light < 500) {
+      digitalWrite(ledPin, HIGH);
+      servo.write(0);
+    } else {
+      digitalWrite(ledPin, LOW);
+      servo.write(120);
+    }
+
+    delay(2000);
 
   // digitalWrite(2, 1);
   // digitalWrite(3, 0);
